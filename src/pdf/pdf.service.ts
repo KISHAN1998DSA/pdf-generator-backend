@@ -3,6 +3,8 @@ import PdfPrinter from 'pdfmake';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfDto } from './pdf.dto';
 import * as path from 'path';
+import htmlToPdfmake from 'html-to-pdfmake';
+import { JSDOM } from 'jsdom';
 
 @Injectable()
 export class PdfService {
@@ -20,6 +22,15 @@ export class PdfService {
     // Create PDF printer
     const printer = new PdfPrinter(fonts);
 
+    // Process content - convert HTML to pdfmake compatible format if it contains HTML
+    let processedContent;
+    if (this.containsHtml(pdfDto.content)) {
+      const { window } = new JSDOM('');
+      processedContent = htmlToPdfmake(pdfDto.content, { window });
+    } else {
+      processedContent = pdfDto.content;
+    }
+
     // Define document content
     const docDefinition: TDocumentDefinitions = {
       content: [
@@ -30,11 +41,7 @@ export class PdfService {
           alignment: 'center',
           margin: [0, 0, 0, 20],
         },
-        {
-          text: pdfDto.content,
-          fontSize: 12,
-          margin: [0, 20, 0, 20],
-        },
+        processedContent,
       ],
       footer: {
         text: `Generated on ${new Date().toLocaleString()}`,
@@ -60,5 +67,11 @@ export class PdfService {
         reject(error);
       }
     });
+  }
+
+  // Helper method to detect if content contains HTML
+  private containsHtml(text: string): boolean {
+    const htmlRegex = /<([A-Za-z][A-Za-z0-9]*)\b[^>]*>(.*?)<\/\1>/;
+    return htmlRegex.test(text);
   }
 }
