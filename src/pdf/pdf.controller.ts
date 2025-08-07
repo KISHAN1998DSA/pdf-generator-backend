@@ -14,7 +14,7 @@ export class PdfController {
       
       res.set({
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="generated-pdf.pdf"`,
+        'Content-Disposition': `attachment; filename=${pdfDto.title}.pdf`,
         'Content-Length': pdfBuffer.length,
       });
       
